@@ -769,7 +769,7 @@ class block_apsolu_dashboard extends block_base {
         $headeractive = get_config('local_apsolu', 'apsoludashboardheaderactive');
 
         $data->countheaderdata = 0;
-        if ($headeractive !== false) {
+        if ($headeractive) {
             $headerdata = [];
 
             $data->headercontent = get_config('local_apsolu', 'apsoludashboardheadercontent');
