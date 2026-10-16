@@ -128,7 +128,7 @@ class block_apsolu_dashboard extends block_base {
 
         switch ($session->status) {
             case enrol_select_plugin::ACCEPTED:
-                $session->enrolment_accepted = $listname;
+                $session->enrolment_accepted = get_enrol_list_fieldvalue($session->status, 'status', false, false);
                 break;
             case enrol_select_plugin::MAIN:
                 $session->enrolment_main = $listname;
@@ -243,20 +243,13 @@ class block_apsolu_dashboard extends block_base {
                 $enrolment->calendar = $calendartypes[$course->calendarid]->name;
             }
 
-            $listname = get_enrol_list_fieldvalue($course->status, 'listname');
-            switch ($course->status) {
-                case enrol_select_plugin::ACCEPTED:
-                    $enrolment->enrolment_accepted = $listname;
-                    break;
-                case enrol_select_plugin::MAIN:
-                    $enrolment->enrolment_main = $listname;
-                    break;
-                case enrol_select_plugin::WAIT:
-                    $enrolment->enrolment_wait = $listname;
-                    break;
-                case enrol_select_plugin::DELETED:
-                    $enrolment->enrolment_deleted = $listname;
+            if ($course->status == enrol_select_plugin::ACCEPTED) {
+                $enrolment->enrolment_accepted = get_enrol_list_fieldvalue($course->status, 'status', false, false);
+            } else {
+                $enrolment->enrolment_not_accepted = get_enrol_list_fieldvalue($course->status, 'listname');
             }
+
+            $enrolment->badge = get_list_badge_color($course->status);
 
             $courses[$course->id]->enrolments[] = $enrolment;
             $courses[$course->id]->count_enrolments++;
