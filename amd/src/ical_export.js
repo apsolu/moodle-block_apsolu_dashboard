@@ -49,7 +49,7 @@ define(['jquery', 'core/modal', 'core/str', 'core/templates', 'core/notification
     };
 
     /**
-     * Positionne le focus sur le contenu de la modale.
+     * Affiche le contenu correspondant à la page demandée.
      *
      * @param {Modal} modal la modale d'aide.
      * @param {Number} index l'index de la page.
