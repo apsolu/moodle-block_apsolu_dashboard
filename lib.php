@@ -30,7 +30,7 @@
 function block_apsolu_dashboard_user_preferences() {
     $preferences = [];
 
-    $preferences['block_apsolu_dahsboard_active_tab'] = [
+    $preferences['block_apsolu_dashboard_active_tab'] = [
         'type' => PARAM_ALPHAEXT,
         'null' => NULL_NOT_ALLOWED,
         'default' => 'rendez-vous',

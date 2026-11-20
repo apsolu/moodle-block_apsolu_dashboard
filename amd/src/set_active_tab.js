@@ -69,7 +69,7 @@ define(["block_apsolu_dashboard/preference", "core/notification"], function(User
             document.querySelectorAll("#block-apsolu-dashboard-nav-tabs li a.nav-link").forEach(function(tab) {
                 tab.addEventListener("click", function() {
                     let value = tab.getAttribute("aria-controls");
-                    UserRepository.setUserPreference("block_apsolu_dahsboard_active_tab", value, userid)
+                    UserRepository.setUserPreference("block_apsolu_dashboard_active_tab", value, userid)
                         .catch(Notification.exception);
                 });
             });

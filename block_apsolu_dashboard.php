@@ -829,7 +829,7 @@ class block_apsolu_dashboard extends block_base {
 
         $this->page->requires->css('/enrol/select/styles/ol.css');
 
-        $activetab = get_user_preferences('block_apsolu_dahsboard_active_tab', $default = 'rendez-vous');
+        $activetab = get_user_preferences('block_apsolu_dashboard_active_tab', $default = 'rendez-vous');
         $this->page->requires->js_call_amd('block_apsolu_dashboard/hashes_observer', 'initialise');
         $this->page->requires->js_call_amd('block_apsolu_dashboard/set_active_tab', 'initialise', [$activetab, $USER->id]);
         $this->page->requires->js_call_amd('enrol_select/select_mapping', 'initialise');
