@@ -30,15 +30,23 @@
     * is_siuaps_rennes
     * shnu
     * pendingenrolments
-    * count_main_teachings
-    * main_teachings
-        * fullname
-        * visible
-        * enrolid
-    * count_other_teachings
-    * other_teachings
-        * fullname
-        * visible
+    * teachings
+       * courses
+          * id
+          * fullname
+          * visible
+          * enrolid
+          * name
+          * customchar1
+          * courseid
+          * customint7
+          * customint8
+          * roleid
+          * has_many_enrolments
+        * enrolments
+          * id
+          * name
+       * count_courses
 
     Example context (json):
     {
@@ -46,10 +54,7 @@
         "is_siuaps_rennes": false,
         "shnu": false,
         "pendingenrolments": [],
-        "count_main_teachings": 0,
-        "main_teachings": [],
-        "count_other_teachings": 0,
-        "other_teachings": []
+        "teachings": []
     }
 }}
 
@@ -79,23 +84,23 @@
 </ul>
 
 <ul class="mb-2 nav nav-tabs" role="tablist">
+    {{#teachings}}
     <li class="nav-item">
-        <a aria-controls="main-teachings" aria-selected="true" class="nav-link active" data-bs-toggle="tab" href="#main-teachings" id="main-teachings-tab" role="tab" tabindex="0">{{#str}}my_main_teachings, block_apsolu_dashboard{{/str}}</a>
+        <a aria-controls="teachings-{{ shortname }}" aria-selected="true" class="nav-link{{#active}} active{{/active}}" data-bs-toggle="tab" href="#teachings-{{ shortname }}" id="teachings-{{ shortname }}-tab" role="tab">{{ name }}</a>
     </li>
-    <li class="nav-item" role="none">
-        <a aria-controls="other-teachings" aria-selected="false" class="nav-link" data-bs-toggle="tab" href="#other-teachings" id="other-teachings-tab" role="tab" tabindex="-1">{{#str}}my_other_teachings, block_apsolu_dashboard{{/str}}</a>
-    </li>
+    {{/teachings}}
 </ul>
 
 <div class="tab-content">
-    <div id="main-teachings" class="tab-pane show active" role="tabpanel" aria-labelledby="main-teachings-tab">
-        {{^count_main_teachings}}
+    {{#teachings}}
+    <div id="teachings-{{ shortname }}" class="tab-pane show{{#active}} active{{/active}}" role="tabpanel" aria-labelledby="teachings-{{ shortname }}-tab">
+        {{^count_courses}}
         <p class="alert alert-info">{{#str}}no_courses, block_apsolu_dashboard{{/str}}</p>
-        {{/count_main_teachings}}
+        {{/count_courses}}
 
-        {{#count_main_teachings}}
+        {{#count_courses}}
         <ul class="list-unstyled list-group">
-            {{#main_teachings}}
+            {{#courses}}
             <li class="list-group-item list-group-item-action">
                 <p class="pull-left"><a {{^visible}}class="text-muted" {{/visible}}href="{{wwwroot}}/course/view.php?id={{id}}">{{fullname}}</a></p>
                 {{#enrolid}}
@@ -119,23 +124,9 @@
                 </ul>
                 {{/enrolid}}
             </li>
-            {{/main_teachings}}
+            {{/courses}}
         </ul>
-        {{/count_main_teachings}}
+        {{/count_courses}}
     </div>
-    <div id="other-teachings" class="tab-pane fade" role="tabpanel" aria-labelledby="other-teachings-tab">
-        {{^count_other_teachings}}
-        <p class="alert alert-info">{{#str}}no_courses, block_apsolu_dashboard{{/str}}</p>
-        {{/count_other_teachings}}
-
-        {{#count_other_teachings}}
-        <ul class="list-unstyled list-group">
-            {{#other_teachings}}
-            <li class="list-group-item list-group-item-action">
-                <p><a {{^visible}}class="text-muted" {{/visible}}href="{{wwwroot}}/course/view.php?id={{id}}">{{fullname}}</a></p>
-            </li>
-            {{/other_teachings}}
-        </ul>
-        {{/count_other_teachings}}
-    </div>
+    {{/teachings}}
 </div>

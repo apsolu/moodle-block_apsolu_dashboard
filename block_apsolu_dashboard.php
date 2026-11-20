@@ -292,19 +292,13 @@ class block_apsolu_dashboard extends block_base {
      * Retourne la liste des cours où l'utilisateur enseigne.
      *
      * @return array Retourne un tuple de données :
-     *      array(liste_des_cours[], nombre de cours, liste_des_autres_cours[], nombre de cours 'autres')
+     *      array(liste_des_cours[], nombre de cours)
      */
     private function get_teachings() {
         global $DB, $USER;
 
-        $mains = [];
-        $countmains = 0;
-
-        $others = [];
-        $countothers = 0;
-
         // Récupère tous les cours où l'utilisateur courant enseigne.
-        $sql = "SELECT c.id, c.fullname, c.visible, e.id AS enrolid, e.name AS enrolname,
+        $sql = "SELECT c.id, c.fullname, c.visible, e.id AS enrolid, e.name, e.customchar1, e.courseid,
                        e.customint7, e.customint8, ra.roleid
                   FROM {course} c
                   JOIN {context} ctx ON c.id = ctx.instanceid AND ctx.contextlevel = 50
@@ -312,71 +306,119 @@ class block_apsolu_dashboard extends block_base {
                   JOIN {role} r ON r.id = ra.roleid
              LEFT JOIN {enrol} e ON c.id = e.courseid AND e.status = 0 AND e.enrol = 'select'
                  WHERE ra.userid = :userid
-                   AND r.archetype = 'editingteacher'";
-        $parameters = ['userid' => $USER->id];
+                   AND r.archetype = 'editingteacher'
+              ORDER BY c.visible DESC, c.fullname";
+        $recordset = $DB->get_recordset_sql($sql, ['userid' => $USER->id]);
+
+        if ($recordset->valid() === false) {
+            // Si l'utilisateur n'a pas de cours, on retourne un tableau vide pour éviter des requêtes SQL inutiles.
+            return [[], 0];
+        }
+
+        // Récupère tous les types de cours.
+        $coursetypes = [];
+        foreach ($DB->get_records('apsolu_courses_types', [], $sort = 'sortorder') as $coursetype) {
+            $coursetypes[$coursetype->id] = $coursetype;
+            $coursetypes[$coursetype->id]->courses = [];
+            $coursetypes[$coursetype->id]->count_courses = 0;
+        }
+        // Ajoute un type de cours "autres enseignements".
+        $coursetypes[-1] = new stdClass();
+        $coursetypes[-1]->name = get_string('my_other_teachings', 'block_apsolu_dashboard');
+        $coursetypes[-1]->shortname = 'other';
+        $coursetypes[-1]->courses = [];
+        $coursetypes[-1]->count_courses = 0;
+
+        // Récupère tous les cours "APSOLU".
+        $apsolucourses = Course::sort(Course::get_records(), ['visible', 'categoryname', 'daterange', 'weekday', 'timerange']);
 
         $pluginselect = enrol_get_plugin('select');
 
         $courses = [];
-        $apsolucourses = Course::sort(Course::get_records(), ['visible', 'categoryname', 'daterange', 'weekday', 'timerange']);
-        $recordset = $DB->get_recordset_sql($sql, $parameters);
-        foreach ($recordset as $course) {
-            $course->apsolucourse = null;
-            if (isset($apsolucourses[$course->id]) === true) {
-                $course->apsolucourse = $course->id;
-            }
-
-            if (empty($course->enrolname) === true) {
-                $course->enrolname = get_string('pluginname', 'enrol_select');
-            }
-
+        $countcourses = 0;
+        foreach ($recordset as $record) {
             $enrol = new stdClass();
-            $enrol->id = $course->enrolid;
-            $enrol->name = $course->enrolname;
+            $enrol->id = $record->enrolid;
+            $enrol->name = $record->name;
+            $enrol->customchar1 = $record->customchar1;
+            $enrol->courseid = $record->id;
 
-            if (isset($courses[$course->id]) === false) {
-                $course->enrolments = [];
-                unset($course->enrolname);
+            $enrol->name = $pluginselect->get_instance_name($enrol);
 
-                $courses[$course->id] = $course;
+            if (isset($courses[$record->id]) === false) {
+                $record->enrolments = [];
+
+                $courses[$record->id] = $record;
+                $countcourses++;
             }
 
-            if (empty($course->enrolid) === false && $pluginselect->is_active_course_period($course) === true) {
+            if (empty($record->enrolid) === false && $pluginselect->is_active_course_period($record) === true) {
                 // Détermine une inscription active à placer sur le bouton principal de téléchargement des étudiants.
-                $courses[$course->id]->enrolid = $course->enrolid;
+                $courses[$record->id]->enrolid = $record->enrolid;
             }
 
-            $courses[$course->id]->enrolments[] = $enrol;
+            $courses[$record->id]->enrolments[] = $enrol;
+
+            // Gère les enseignements "APSOLU".
+            if (isset($apsolucourses[$record->id]) === true) {
+                $coursetypeid = $apsolucourses[$record->id]->customfields['type']->get('intvalue');
+                if (isset($coursetypeid, $coursetypes[$coursetypeid]) === true) {
+                    // Détermine si le cours possède plusieurs méthodes d'inscription.
+                    // Si ce n'est pas le cas, on ne propose pas de téléchargement par méthode d'inscription.
+                    $courses[$record->id]->has_many_enrolments = isset($courses[$record->id]->enrolments[1]);
+
+                    if (isset($coursetypes[$coursetypeid]->courses[$record->id]) === false) {
+                        $coursetypes[$coursetypeid]->count_courses++;
+                    }
+                    $coursetypes[$coursetypeid]->courses[$record->id] = $courses[$record->id];
+
+                    continue;
+                }
+            }
+
+            // Gère les autres enseignements.
+            if (isset($coursetypes[-1]->courses[$record->id]) === false) {
+                $coursetypes[-1]->count_courses++;
+            }
+
+            // Permet de masquer les boutons "Gérer les inscriptions" / "Exporter la liste des inscrits" qui ne sont pas utiles sur
+            // les cours hors APSOLU.
+            unset($courses[$record->id]->enrolid);
+
+            $coursetypes[-1]->courses[$record->id] = $courses[$record->id];
         }
         $recordset->close();
 
-        // Gère les cours APSOLU.
-        foreach ($apsolucourses as $apsolucourse) {
-            if (isset($courses[$apsolucourse->id]) === false) {
+        // Formate les données pour Mustache.
+        $active = true;
+        foreach ($coursetypes as $coursetypeid => $coursetype) {
+            if ($coursetypes[$coursetypeid]->count_courses === 0) {
+                // Permet de ne pas afficher un onglet "sans activité".
+                unset($coursetypes[$coursetypeid]);
                 continue;
             }
 
-            $course = $courses[$apsolucourse->id];
+            $coursetypes[$coursetypeid]->active = $active;
+            if ($coursetypeid === -1) {
+                $coursetypes[$coursetypeid]->courses = array_values($coursetype->courses);
+            } else {
+                // Reconstruit le tableau des cours pour conserver l'ordre de tri des cours APSOLU.
+                $courses = $coursetypes[$coursetypeid]->courses;
+                $coursetypes[$coursetypeid]->courses = [];
+                foreach ($apsolucourses as $courseid => $apsolucourse) {
+                    if (isset($courses[$courseid]) === false) {
+                        continue;
+                    }
 
-            // Détermine si le cours possède plusieurs méthodes d'inscription.
-            // Si ce n'est pas le cas, on ne propose pas de téléchargement par méthode d'inscription.
-            $course->has_many_enrolments = isset($course->enrolments[1]);
+                    $coursetypes[$coursetypeid]->courses[] = $courses[$courseid];
+                    unset($apsolucourses[$courseid]);
+                }
+            }
 
-            $mains[$course->id] = $course;
-            $countmains++;
-
-            unset($courses[$course->id]);
+            $active = false;
         }
 
-        // Gère les autres cours (meta-cours, etc).
-        foreach ($courses as $course) {
-            $others[$course->id] = $course;
-            $countothers++;
-        }
-
-        unset($courses);
-
-        return [array_values($mains), $countmains, array_values($others), $countothers];
+        return [array_values($coursetypes), $countcourses];
     }
 
     /**
@@ -644,9 +686,7 @@ class block_apsolu_dashboard extends block_base {
         $data->count_attendances = count($data->attendances);
 
         // Récupère les cours où l'utilisateur enseigne.
-        [$data->main_teachings, $data->count_main_teachings,
-            $data->other_teachings, $data->count_other_teachings] = $this->get_teachings();
-        $data->count_teachings = $data->count_main_teachings + $data->count_other_teachings;
+        [$data->teachings, $data->count_teachings] = $this->get_teachings();
 
         if ($data->count_teachings > 0) {
             // TODO: rendre plus flexible.
