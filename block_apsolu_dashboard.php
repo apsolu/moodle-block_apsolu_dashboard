@@ -292,7 +292,7 @@ class block_apsolu_dashboard extends block_base {
      * Retourne la liste des cours où l'utilisateur enseigne.
      *
      * @return array Retourne un tuple de données :
-     *      array(liste_des_cours[], nombre de cours)
+     *      array(liste_des_cours[], nombre de cours, préférences)
      */
     private function get_teachings() {
         global $DB, $USER;
@@ -312,7 +312,21 @@ class block_apsolu_dashboard extends block_base {
 
         if ($recordset->valid() === false) {
             // Si l'utilisateur n'a pas de cours, on retourne un tableau vide pour éviter des requêtes SQL inutiles.
-            return [[], 0];
+            return [[], 0, null];
+        }
+
+        // Charge les préférences.
+        require_once(__DIR__ . '/lib.php');
+
+        $preferences = new stdClass();
+        foreach (block_apsolu_dashboard_user_preferences() as $key => $preference) {
+            $preferences->{$key} = get_user_preferences($key, $preference['default']);
+        }
+
+        if ($preferences->block_apsolu_dashboard_teachings_sort_order === 'name') {
+            $preferences->block_apsolu_dashboard_teachings_sort_order_name = 1;
+        } else {
+            $preferences->block_apsolu_dashboard_teachings_sort_order_time = 1;
         }
 
         // Récupère tous les types de cours.
@@ -330,7 +344,12 @@ class block_apsolu_dashboard extends block_base {
         $coursetypes[-1]->count_courses = 0;
 
         // Récupère tous les cours "APSOLU".
-        $apsolucourses = Course::sort(Course::get_records(), ['visible', 'categoryname', 'daterange', 'weekday', 'timerange']);
+        if ($preferences->block_apsolu_dashboard_teachings_sort_order === 'name') {
+            $sortorder = ['visible', 'categoryname', 'daterange', 'weekday', 'timerange'];
+        } else {
+            $sortorder = ['visible', 'daterange', 'weekday', 'timerange', 'categoryname'];
+        }
+        $apsolucourses = Course::sort(Course::get_records(), $sortorder);
 
         $pluginselect = enrol_get_plugin('select');
 
@@ -347,14 +366,25 @@ class block_apsolu_dashboard extends block_base {
 
             if (isset($courses[$record->id]) === false) {
                 $record->enrolments = [];
+                $record->past = false;
+                $record->current = false;
+                $record->upcoming = false;
 
                 $courses[$record->id] = $record;
                 $countcourses++;
             }
 
-            if (empty($record->enrolid) === false && $pluginselect->is_active_course_period($record) === true) {
-                // Détermine une inscription active à placer sur le bouton principal de téléchargement des étudiants.
-                $courses[$record->id]->enrolid = $record->enrolid;
+            if (empty($record->enrolid) === false) {
+                if ($pluginselect->is_active_course_period($record) === true) {
+                    $record->current = true;
+
+                    // Détermine une inscription active à placer sur le bouton principal de téléchargement des étudiants.
+                    $courses[$record->id]->enrolid = $record->enrolid;
+                } else if ($pluginselect->is_past_course($record) === true) {
+                    $record->past = true;
+                } else if ($pluginselect->is_upcoming_course($record) === true) {
+                    $record->upcoming = true;
+                }
             }
 
             $courses[$record->id]->enrolments[] = $enrol;
@@ -410,6 +440,33 @@ class block_apsolu_dashboard extends block_base {
                         continue;
                     }
 
+                    if (
+                        empty($courses[$courseid]->visible) === true &&
+                        empty($preferences->block_apsolu_dashboard_teachings_display_hidden_courses) === true
+                    ) {
+                        // Ignore le traitement des cours masqués.
+                        unset($apsolucourses[$courseid]);
+                        continue;
+                    }
+
+                    if (
+                        $courses[$courseid]->past === true &&
+                        empty($preferences->block_apsolu_dashboard_teachings_display_past_courses) === true
+                    ) {
+                        // Ignore les cours passés.
+                        unset($apsolucourses[$courseid]);
+                        continue;
+                    }
+
+                    if (
+                        $courses[$courseid]->upcoming === true &&
+                        empty($preferences->block_apsolu_dashboard_teachings_display_upcoming_courses) === true
+                    ) {
+                        // Ignore les cours à venir.
+                        unset($apsolucourses[$courseid]);
+                        continue;
+                    }
+
                     $coursetypes[$coursetypeid]->courses[] = $courses[$courseid];
                     unset($apsolucourses[$courseid]);
                 }
@@ -418,7 +475,7 @@ class block_apsolu_dashboard extends block_base {
             $active = false;
         }
 
-        return [array_values($coursetypes), $countcourses];
+        return [array_values($coursetypes), $countcourses, $preferences];
     }
 
     /**
@@ -686,7 +743,7 @@ class block_apsolu_dashboard extends block_base {
         $data->count_attendances = count($data->attendances);
 
         // Récupère les cours où l'utilisateur enseigne.
-        [$data->teachings, $data->count_teachings] = $this->get_teachings();
+        [$data->teachings, $data->count_teachings, $data->teaching_preferences] = $this->get_teachings();
 
         if ($data->count_teachings > 0) {
             // TODO: rendre plus flexible.

@@ -37,5 +37,33 @@ function block_apsolu_dashboard_user_preferences() {
         'permissioncallback' => [core_user::class, 'is_current_user'],
     ];
 
+    $preferences['block_apsolu_dashboard_teachings_display_upcoming_courses'] = [
+        'type' => PARAM_BOOL,
+        'null' => NULL_NOT_ALLOWED,
+        'default' => '1',
+        'permissioncallback' => [core_user::class, 'is_current_user'],
+    ];
+
+    $preferences['block_apsolu_dashboard_teachings_display_past_courses'] = [
+        'type' => PARAM_BOOL,
+        'null' => NULL_NOT_ALLOWED,
+        'default' => '1',
+        'permissioncallback' => [core_user::class, 'is_current_user'],
+    ];
+
+    $preferences['block_apsolu_dashboard_teachings_display_hidden_courses'] = [
+        'type' => PARAM_BOOL,
+        'null' => NULL_NOT_ALLOWED,
+        'default' => '1',
+        'permissioncallback' => [core_user::class, 'is_current_user'],
+    ];
+
+    $preferences['block_apsolu_dashboard_teachings_sort_order'] = [
+        'type' => PARAM_ALPHA,
+        'null' => NULL_NOT_ALLOWED,
+        'default' => 'name',
+        'permissioncallback' => [core_user::class, 'is_current_user'],
+    ];
+
     return $preferences;
 }

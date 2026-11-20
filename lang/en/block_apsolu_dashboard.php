@@ -31,6 +31,7 @@ $string['caption_str_3'] = 'Donnez un nom au calendrier, et choisissez une coule
 $string['close'] = 'Fermer';
 $string['contact_your_teacher'] = 'Contacter votre enseignant :';
 $string['courses_signup'] = 'S’inscrire à une activité';
+$string['display'] = 'Affichage';
 $string['download_all_my_attendances'] = 'Télécharger toutes mes présences';
 $string['enrol_users'] = 'Gérer les inscriptions';
 $string['enrolment_type'] = 'Type d’inscription';
@@ -75,6 +76,11 @@ $string['pre-sessions_notice'] = '<div class="alert alert-info">' .
     '</div>';
 $string['prev_step'] = 'Étape précédente';
 $string['sessions'] = 'Séances hebdomadaires';
+$string['show_hidden_courses'] = 'Afficher les cours masqués';
+$string['show_past_courses'] = 'Afficher les cours passés';
+$string['show_upcoming_courses'] = 'Afficher les cours à venir';
+$string['sort_by_activity_then_in_chronological_order'] = 'Trier par activité, puis par ordre chronologique';
+$string['sort_in_chronological_order_then_by_activity'] = 'Trier par ordre chronologique, puis par activité';
 $string['title'] = 'APSOLU: Tableau de bord';
 $string['unallowed_enrolment'] = 'D’après votre contrat pédagogique, vous ne pouvez pas :';
 $string['unallowed_enrolment_contact'] = 'Merci de contacter votre enseignant pour plus d’information.';

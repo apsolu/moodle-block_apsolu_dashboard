@@ -30,6 +30,7 @@
     * is_siuaps_rennes
     * shnu
     * pendingenrolments
+    * teaching_preferences
     * teachings
        * courses
           * id
@@ -54,9 +55,37 @@
         "is_siuaps_rennes": false,
         "shnu": false,
         "pendingenrolments": [],
+        "teaching_preferences": {},
         "teachings": []
     }
 }}
+
+<div class="text-end">
+    <a aria-expanded="false" class="dropdown-toggle px-2" data-bs-toggle="dropdown" href="#" role="button"><i aria-hidden="true" class="fa fa-filter fa-fw icon mx-1 navicon"></i>{{#str}}display, block_apsolu_dashboard{{/str}}</a>
+
+    <div class="dropdown-menu m-0 p-0">
+        <form action="{{wwwroot}}/blocks/apsolu_dashboard/preferences.php" class="m-1 px-3 py-2" method="post">
+            <div class="form-check">
+                <label><input {{#teaching_preferences.block_apsolu_dashboard_teachings_display_upcoming_courses}}checked {{/teaching_preferences.block_apsolu_dashboard_teachings_display_upcoming_courses}}class="form-check-input" name="block_apsolu_dashboard_teachings_display_upcoming_courses" value="1" type="checkbox">{{#str}}show_upcoming_courses, block_apsolu_dashboard{{/str}}</label>
+            </div>
+            <div class="form-check">
+                <label><input {{#teaching_preferences.block_apsolu_dashboard_teachings_display_past_courses}}checked {{/teaching_preferences.block_apsolu_dashboard_teachings_display_past_courses}}class="form-check-input" name="block_apsolu_dashboard_teachings_display_past_courses" value="1" type="checkbox">{{#str}}show_past_courses, block_apsolu_dashboard{{/str}}</label>
+            </div>
+            <div class="form-check">
+                <label><input {{#teaching_preferences.block_apsolu_dashboard_teachings_display_hidden_courses}}checked {{/teaching_preferences.block_apsolu_dashboard_teachings_display_hidden_courses}}class="form-check-input" name="block_apsolu_dashboard_teachings_display_hidden_courses" value="1" type="checkbox">{{#str}}show_hidden_courses, block_apsolu_dashboard{{/str}}</label>
+            </div>
+            <div class="dropdown-divider"></div>
+            <div class="form-check">
+                <label class="d-block"><input {{#teaching_preferences.block_apsolu_dashboard_teachings_sort_order_name}}checked {{/teaching_preferences.block_apsolu_dashboard_teachings_sort_order_name}}class="form-check-input" name="block_apsolu_dashboard_teachings_sort_order" value="name" type="radio">{{#str}}sort_by_activity_then_in_chronological_order, block_apsolu_dashboard{{/str}}</label>
+                <label class="d-block"><input {{#teaching_preferences.block_apsolu_dashboard_teachings_sort_order_time}}checked {{/teaching_preferences.block_apsolu_dashboard_teachings_sort_order_time}}class="form-check-input" name="block_apsolu_dashboard_teachings_sort_order" value="time" type="radio">{{#str}}sort_in_chronological_order_then_by_activity, block_apsolu_dashboard{{/str}}</label>
+            </div>
+            <div class="dropdown-divider"></div>
+            <div class="text-end">
+                <button class="btn btn-primary btn-sm" type="submit">{{#str}}save{{/str}}</button>
+            </div>
+      </form>
+    </div>
+</div>
 
 <ul class="list-inline">
     <li class="list-inline-item"><a id="apsolu-dashboard-search-students" class="btn btn-sm btn-default btn-secondary" href="{{wwwroot}}/blocks/apsolu_dashboard/extractions.php">{{#str}}my_students, block_apsolu_dashboard{{/str}}</a></li>
