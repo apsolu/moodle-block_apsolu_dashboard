@@ -303,8 +303,9 @@ class block_apsolu_dashboard extends block_base {
         $others = [];
         $countothers = 0;
 
-        $sql = "SELECT c.id, c.fullname, c.visible, e.id AS enrolid, e.name AS enrolname, e.customint8 AS endcourse,
-                       e.customint7 AS startcourse, ra.roleid
+        // Récupère tous les cours où l'utilisateur courant enseigne.
+        $sql = "SELECT c.id, c.fullname, c.visible, e.id AS enrolid, e.name AS enrolname,
+                       e.customint7, e.customint8, ra.roleid
                   FROM {course} c
                   JOIN {context} ctx ON c.id = ctx.instanceid AND ctx.contextlevel = 50
                   JOIN {role_assignments} ra ON ctx.id = ra.contextid
@@ -313,6 +314,8 @@ class block_apsolu_dashboard extends block_base {
                  WHERE ra.userid = :userid
                    AND r.archetype = 'editingteacher'";
         $parameters = ['userid' => $USER->id];
+
+        $pluginselect = enrol_get_plugin('select');
 
         $courses = [];
         $apsolucourses = Course::sort(Course::get_records(), ['visible', 'categoryname', 'daterange', 'weekday', 'timerange']);
@@ -338,12 +341,8 @@ class block_apsolu_dashboard extends block_base {
                 $courses[$course->id] = $course;
             }
 
-            if (
-                (empty($course->startcourse) === true || $course->startcourse <= time()) &&
-                (empty($course->endcourse) === true || $course->endcourse >= time())
-            ) {
+            if (empty($course->enrolid) === false && $pluginselect->is_active_course_period($course) === true) {
                 // Détermine une inscription active à placer sur le bouton principal de téléchargement des étudiants.
-                // TODO: créer une fonction pour ça, car ces comparaisons sont certainement réutilisées ailleurs.
                 $courses[$course->id]->enrolid = $course->enrolid;
             }
 
