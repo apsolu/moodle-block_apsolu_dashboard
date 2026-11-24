@@ -82,7 +82,7 @@ foreach ($DB->get_records_sql($sql) as $record) {
 
 // Load roles.
 $roles = ['*' => get_string('all')];
-foreach ($DB->get_records('role', ['archetype' => 'student']) as $role) {
+foreach ($DB->get_records('role', ['archetype' => 'student'], $sortorder = 'sortorder') as $role) {
     if (!empty($role->name) !== false) {
         $roles[$role->id] = $role->name;
     }

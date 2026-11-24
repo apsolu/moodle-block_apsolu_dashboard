@@ -710,7 +710,7 @@ class block_apsolu_dashboard extends block_base {
             if ($sesame !== false && $sesame->data === '1') {
                 require_once($CFG->dirroot . '/enrol/select/locallib.php');
 
-                $roles = role_fix_names($DB->get_records('role'));
+                $roles = role_fix_names($DB->get_records('role', [], 'sortorder'));
 
                 $enrolments = enrol_select_get_real_user_activity_enrolments();
                 foreach ($enrolments as $enrolment) {
